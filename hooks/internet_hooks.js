@@ -23,6 +23,23 @@ function instrumentInternetOpenUrl(opts) {
 			});
 		}
 	});
+
+// 0703
+	var pWinHttpCreateUrl = opts.unicode ? Module.findExportByName("WINHTTP.dll", "WinHttpCreateUrl")
+                                        : Module.findExportByName("WINHTTP.dll", "WinHttpCreateUrl");
+	if(null == pWinHttpCreateUrl)
+		return 0;
+
+	Interceptor.attach(pWinHttpCreateUrl, {
+		onEnter: function(args) {
+			var url = opts.unicode ? args[2].readUtf16String() : args[2].readUtf8String();
+			send({
+				'hook': 'WinHttpCreateUrl',
+				'url': url
+			});
+		}
+	});
+
 	return 1;
 }
 
@@ -106,12 +123,12 @@ function instrumentLoadLibrary(opts) {
 	});
 }
 
-InternetOpenUrl_Instrumented = (instrumentInternetOpenUrl({unicode: 0}) && 
+InternetOpenUrl_Instrumented = (instrumentInternetOpenUrl({unicode: 0}) &&
 	                            instrumentInternetOpenUrl({unicode: 1}));
 
-GetAddrInfo_Instrumented = (instrumentGetAddrInfo({unicode: 0, ex: 0}) && 
-	                        instrumentGetAddrInfo({unicode: 1, ex: 0}) && 
-	                        instrumentGetAddrInfo({unicode: 0, ex: 1}) && 
+GetAddrInfo_Instrumented = (instrumentGetAddrInfo({unicode: 0, ex: 0}) &&
+	                        instrumentGetAddrInfo({unicode: 1, ex: 0}) &&
+	                        instrumentGetAddrInfo({unicode: 0, ex: 1}) &&
 	                        instrumentGetAddrInfo({unicode: 1, ex: 1}));
 
 if(!InternetOpenUrl_Instrumented || !GetAddrInfo_Instrumented) {        // (wininet.dll | ws2_32.dll) not imported yet
