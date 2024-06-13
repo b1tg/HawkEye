@@ -11,7 +11,7 @@ BOOL WINAPI CreateProcessInternalW(
   IN LPCWSTR               lpCurrentDirectory,
   IN LPSTARTUPINFOW        lpStartupInfo,
   IN LPPROCESS_INFORMATION lpProcessInformation,
-  OUT PHANDLE              hNewToken 
+  OUT PHANDLE              hNewToken
 );
 typedef struct _PROCESS_INFORMATION {
   HANDLE hProcess;
@@ -77,5 +77,20 @@ Interceptor.attach(pVirtualAllocEx, {
 			'hook': 'VirtualAllocEx',
 			'handle': args[0].toInt32()
 		});
+	}
+});
+
+// 2023/07/03
+
+var pSleep = Module.findExportByName(null, "Sleep");
+Interceptor.attach(pSleep, {
+	onEnter: function(args) {
+		send({
+			'hook': 'Sleep',
+			'n': args[0].toInt32()
+		});
+	},
+	onLeave: function(retval) {
+		retval.replace(1);
 	}
 });
