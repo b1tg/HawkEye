@@ -97,6 +97,7 @@ mutexes         = set()
 
 # handle process activity hooks
 def handle_process(payload):
+	print("== handle_process:", payload)
 	if(payload['hook'] == 'CreateProcessInternalW'):
 		phandle_to_pid[payload['handle']] = payload['pid']
 		if(payload['cmd'] != None):
@@ -170,7 +171,11 @@ def handle_registry(payload):
 def handle_internet(payload):
 	if(payload['hook'] == 'InternetOpenUrl'):
 		accesed_urls.add(payload['url'])
+	elif(payload['hook'] == 'WinHttpCreateUrl'):
+		print("== WinHttpCreateUrl: ", payload)
+		accesed_urls.add(payload['url'])
 	elif(payload['hook'] == 'GetAddrInfo'):
+		print("== GetAddrInfo: ", payload)
 		if('.' in payload['domain']):
 			dns_domains.add(payload['domain'])
 
@@ -180,7 +185,7 @@ def handle_internet(payload):
 def handle_general(payload):
 	if(payload['hook'] == 'GetProcAddress'):
 		dynamic_imports.add(payload['func'])
-	
+
 	elif(payload['hook'] == 'CreateMutex'):
 		if(payload['mutex'] != None):
 			mutexes.add(payload['mutex'])
@@ -201,7 +206,7 @@ def on_message(message, data):
 	if(message['type'] == 'error'): return
 
 	payload = message['payload']
-
+	#print("== on_message:", payload)
 	if(payload['hook'] in general_hooks):
 		handle_general(payload)
 	elif(payload['hook'] in process_hooks):
@@ -212,7 +217,7 @@ def on_message(message, data):
 		handle_registry(payload)
 	elif(payload['hook'] in internet_hooks):
 		handle_internet(payload)
-	
+
 def on_detached(message, data):
 	print("The process has terminated!")
 	sys.exit()
